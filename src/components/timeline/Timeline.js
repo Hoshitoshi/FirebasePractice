@@ -1,16 +1,30 @@
-import React from 'react'
+import React, { useEffect} from 'react'
+import {useState} from 'react'
 import "./Timeline.css"
 import TweetBox from './TweetBox'
 import Post from './Post'
 import db from "../../firebase"
-import { collection, getDocs } from "firebase/firestore"; 
+import { collection, getDocs, query, orderBy, onSnapshot } from "firebase/firestore"; 
+import FlipMove from 'react-flip-move';
 
-function Timeline() {
+function Timeline() { 
 
-  const postData = collection(db,"posts");
-  getDocs(postData).then((querySnapshot)=>{
-    console.log(querySnapshot.docs.map((doc)=>doc.data()))
-  });
+  const [posts, setPosts] = useState([]);
+
+  
+  useEffect(()=>{
+    const postData = collection(db,"posts");
+    const q = query(postData, orderBy("timestamp","desc"))
+    // getDocs(q).then((querySnapshot)=>{
+    // setPosts(querySnapshot.docs.map((doc)=>doc.data()))
+    // });
+
+    // リアルタイムでデータ取得
+    onSnapshot(q, (querySnapshot)=>{
+      setPosts(querySnapshot.docs.map((doc)=>doc.data()))
+    })
+
+  },[])
 
   return (
     <div className="timeline">
@@ -22,17 +36,21 @@ function Timeline() {
 <TweetBox/>
 
       {/*ポスト*/}
-      <Post
-      displayName="プログラミングチュートリアル"
-      username="Shin_Engineer"
-      verified={true}
-      text="初めてのツイート"
-      avatar="http://shincode.info/wp-content/uploads/2021/12/icon.png"
-      image="https://source.unsplash.com/random"
-      />
-     
+<FlipMove>
+{posts.map((post)=>(
+  <Post
+  // key={post.text}
+  displayName={post.displayName}
+  username={post.username}
+  verified={post.verified}
+  text={post.text}
+  avatar={post.avatar}
+  image={post.image}
+  />
+))}
+ </FlipMove>
     </div>
-  )
+  );
 }
 
 export default Timeline
